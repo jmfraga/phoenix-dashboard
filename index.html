@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phoenix Dashboard</title>
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/phoenix-icon.svg">
+    <link rel="apple-touch-icon" href="/phoenix-icon.svg">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Phoenix 🐦‍🔥">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eee;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 8px 20px;
+        }
+        
+        .main-row {
+            display: flex;
+            gap: 12px;
+            flex: 1;
+            align-items: stretch;
+            min-height: 0;
+        }
+        
+        .thought-bar {
+            margin-top: 6px;
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            font-size: 1.1rem;
+            color: #94a3b8;
+            font-style: italic;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        
+        .thought-bar .thought-icon {
+            font-size: 1.2rem;
+        }
+        
+        /* Fleet header */
+        .fleet-header {
+            padding: 6px 16px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            text-align: center;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        /* Phoenix section */
+        .jarvis-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 18px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 18px;
+            min-width: 220px;
+            transition: all 0.3s ease;
+        }
+        
+        /* Iris section */
+        .iris-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 18px;
+            background: rgba(52, 211, 153, 0.08);
+            border-radius: 18px;
+            min-width: 220px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(52, 211, 153, 0.2);
+        }
+        
+        .iris-section.offline {
+            background: rgba(148, 163, 184, 0.08);
+            border-color: rgba(148, 163, 184, 0.2);
+            opacity: 0.6;
+        }
+        
+        .jarvis-section.alert {
+            background: rgba(239, 68, 68, 0.2);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+        }
+        
+        .jarvis-section.working {
+            background: rgba(96, 165, 250, 0.15);
+        }
+        
+        .face-container {
+            position: relative;
+            width: 55px;
+            height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .face-icon {
+            font-size: 2.8rem;
+            animation: pulse 2s ease-in-out infinite;
+            z-index: 2;
+        }
+        
+        /* Ring behind icon */
+        .face-ring {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid rgba(74, 222, 128, 0.3);
+            z-index: 1;
+        }
+        
+        /* Estado: Listo (default) */
+        .face-icon.ready { animation: pulse 2s ease-in-out infinite; }
+        .face-ring.ready {
+            border-color: rgba(74, 222, 128, 0.3);
+            animation: ring-pulse 2s ease-in-out infinite;
+        }
+        
+        /* Estado: Pensando */
+        .face-icon.thinking { animation: thinking 0.5s ease-in-out infinite; }
+        .face-ring.thinking {
+            border-color: rgba(251, 191, 36, 0.5);
+            animation: ring-spin 1s linear infinite;
+        }
+        
+        /* Estado: Trabajando */
+        .face-icon.working { animation: working 1s ease-in-out infinite; }
+        .face-ring.working {
+            border-color: rgba(96, 165, 250, 0.5);
+            border-style: dashed;
+            animation: ring-spin 2s linear infinite;
+        }
+        
+        /* Estado: Alerta */
+        .face-icon.alert { animation: alert 0.3s ease-in-out infinite; }
+        .face-ring.alert {
+            border-color: rgba(239, 68, 68, 0.7);
+            animation: ring-alert 0.5s ease-in-out infinite;
+        }
+        
+        /* Estado: Durmiendo */
+        .face-icon.sleeping {
+            animation: sleeping 4s ease-in-out infinite;
+            opacity: 0.6;
+        }
+        .face-ring.sleeping {
+            border-color: rgba(148, 163, 184, 0.2);
+            animation: none;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        
+        @keyframes thinking {
+            0%, 100% { transform: rotate(-8deg); }
+            50% { transform: rotate(8deg); }
+        }
+        
+        @keyframes working {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.05) rotate(-3deg); }
+            75% { transform: scale(1.05) rotate(3deg); }
+        }
+        
+        @keyframes alert {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.15); opacity: 0.8; }
+        }
+        
+        @keyframes sleeping {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(0.95); opacity: 0.7; }
+        }
+        
+        @keyframes ring-pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.3; }
+        }
+        
+        @keyframes ring-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes ring-alert {
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.2); opacity: 0.3; }
+        }
+        
+        .jarvis-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .jarvis-name {
+            font-weight: 600;
+            font-size: 1.4rem;
+        }
+        
+        .jarvis-status {
+            font-size: 0.85rem;
+            color: #4ade80;
+            margin-top: 3px;
+            transition: color 0.3s ease;
+            white-space: nowrap;
+        }
+        
+        .jarvis-version {
+            font-size: 0.65rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        
+        .jarvis-status.thinking { color: #fbbf24; }
+        .jarvis-status.working { color: #60a5fa; }
+        .jarvis-status.alert { color: #ef4444; }
+        .jarvis-status.sleeping { color: #94a3b8; }
+        
+        /* Time section */
+        .time-section {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+            padding: 10px 25px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 18px;
+            min-width: 180px;
+        }
+        
+        .time {
+            font-size: 2.8rem;
+            font-weight: 300;
+            line-height: 1;
+        }
+        
+        .date {
+            font-size: 1rem;
+            color: #aaa;
+            margin-top: 4px;
+        }
+        
+        /* Weather */
+        .weather-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 18px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 18px;
+            min-width: 170px;
+        }
+        
+        .weather-icon { font-size: 2.8rem; }
+        
+        .weather-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .weather-temp {
+            font-size: 1.8rem;
+            font-weight: 300;
+            line-height: 1;
+        }
+        
+        .weather-desc {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-top: 2px;
+        }
+        
+        .weather-tip {
+            font-size: 0.7rem;
+            color: #4ade80;
+            margin-top: 2px;
+        }
+        
+        /* Stats section */
+        .stats-section {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 18px;
+            min-width: 180px;
+            gap: 5px;
+        }
+        
+        .stats-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .stats-title {
+            font-size: 0.6rem;
+            color: #888;
+            text-transform: uppercase;
+        }
+        
+        .stat-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+        }
+        
+        .stat-label {
+            width: 50px;
+            font-weight: 500;
+            color: #aaa;
+        }
+        
+        .stat-bar {
+            flex: 1;
+            height: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            overflow: hidden;
+            min-width: 50px;
+        }
+        
+        .stat-fill {
+            height: 100%;
+            background: #4ade80;
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+        
+        .stat-fill.warning { background: #fbbf24; }
+        .stat-fill.danger { background: #ef4444; }
+        .stat-fill.info { background: #60a5fa; }
+        
+        .stat-value {
+            font-size: 0.75rem;
+            color: #aaa;
+            min-width: 45px;
+            text-align: right;
+        }
+        
+        .model-name {
+            font-size: 0.8rem;
+            color: #60a5fa;
+            font-weight: 500;
+        }
+        
+        .usage-val {
+            color: #4ade80;
+            font-size: 0.8rem;
+            flex: 1;
+            text-align: right;
+        }
+        
+        /* Tasks sections */
+        .tasks-section {
+            flex: 1;
+            display: flex;
+            gap: 12px;
+            min-height: 0;
+            overflow: hidden;
+        }
+        
+        .task-card {
+            flex: 1;
+            background: rgba(255,255,255,0.08);
+            border-radius: 18px;
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+        }
+        
+        .task-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        /* Exercise tracker */
+        .exercise-tracker {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 6px 10px;
+            margin-bottom: 8px;
+        }
+        
+        .exercise-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        
+        .exercise-title {
+            font-size: 0.7rem;
+            color: #888;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .exercise-badge {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+        }
+        
+        .exercise-badge.incomplete {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+        }
+        
+        .exercise-badge.achieved {
+            background: rgba(74, 222, 128, 0.3);
+            color: #4ade80;
+            animation: badge-glow 2s ease-in-out infinite;
+        }
+        
+        @keyframes badge-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(74, 222, 128, 0.3); }
+            50% { box-shadow: 0 0 15px rgba(74, 222, 128, 0.5); }
+        }
+        
+        .exercise-days {
+            display: flex;
+            gap: 6px;
+            justify-content: space-between;
+        }
+        
+        .exercise-day {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .day-label {
+            font-size: 0.55rem;
+            color: #666;
+            text-transform: uppercase;
+        }
+        
+        .day-star {
+            font-size: 1rem;
+            opacity: 0.3;
+            transition: all 0.3s ease;
+        }
+        
+        .day-star.done {
+            opacity: 1;
+            animation: star-pop 0.3s ease;
+        }
+        
+        @keyframes star-pop {
+            0% { transform: scale(0.5); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+        
+        .task-list {
+            flex: 1;
+            overflow-y: auto;
+            font-size: 0.9rem;
+            min-height: 0;
+        }
+        
+        .task-item {
+            padding: 4px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .task-item:last-child { border-bottom: none; }
+        
+        .task-time {
+            color: #4ade80;
+            font-size: 0.8rem;
+            min-width: 45px;
+        }
+        
+        .task-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .no-items {
+            color: #666;
+            font-style: italic;
+        }
+        
+        /* Notification */
+        .notif-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 15px;
+            margin-top: 6px;
+            background: rgba(74, 222, 128, 0.15);
+            border-radius: 12px;
+            border-left: 4px solid #4ade80;
+            font-size: 0.95rem;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        
+        .notif-section.hidden { display: none; }
+        
+        .notif-icon { font-size: 1.5rem; }
+        
+        .notif-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+        
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 8px 12px;
+                overflow-y: auto;
+                height: auto;
+                min-height: 100vh;
+            }
+            
+            .main-row {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .jarvis-section {
+                flex-direction: row;
+                justify-content: space-between;
+                padding: 12px 15px;
+            }
+            
+            .jarvis-section .jarvis-info {
+                flex: 1;
+            }
+            
+            .face-container {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .face-icon { font-size: 2.5rem; }
+            .face-ring { width: 45px; height: 45px; }
+            
+            .time-section {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px 15px;
+            }
+            
+            .time { font-size: 2rem; }
+            .date { margin-top: 0; font-size: 0.9rem; }
+            
+            .weather-section {
+                padding: 10px 15px;
+            }
+            
+            .weather-icon { font-size: 2rem; }
+            .weather-temp { font-size: 1.5rem; }
+            
+            .stats-section {
+                padding: 12px 15px;
+            }
+            
+            .model-name {
+                font-size: 1rem;
+                margin-bottom: 5px;
+            }
+            
+            .stats-title {
+                font-size: 0.75rem;
+            }
+            
+            .tasks-section {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .task-card {
+                padding: 10px 15px;
+            }
+            
+            .task-list {
+                max-height: 150px;
+            }
+            
+            .thought-bar {
+                padding: 10px 15px;
+                font-size: 1.1rem;
+            }
+            
+            .notif-section {
+                padding: 8px 15px;
+                font-size: 1rem;
+            }
+        }
+        
+        /* NEW WIDGETS */
+        
+        /* Trending section */
+        .trending-section {
+            background: rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 8px 12px;
+            min-width: 180px;
+        }
+        
+        .trending-title {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .trending-item {
+            font-size: 0.75rem;
+            color: #ccc;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .trending-item:last-child {
+            border-bottom: none;
+        }
+        
+        .trending-item .tag {
+            font-size: 0.6rem;
+            padding: 1px 5px;
+            border-radius: 6px;
+            background: rgba(96, 165, 250, 0.2);
+            color: #60a5fa;
+        }
+        
+        .trending-item .tag.health {
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+        }
+        
+        .trending-item .time {
+            font-size: 0.6rem;
+            color: #666;
+            margin-left: auto;
+        }
+        
+        /* Working On section */
+        .working-on {
+            background: rgba(255,255,255,0.04);
+            border-radius: 10px;
+            padding: 6px 10px;
+            margin-top: 6px;
+        }
+        
+        .working-on-title {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 3px;
+        }
+        
+        .working-on-task {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+        
+        /* Bottom row for Nightly + Yesterday */
+        .bottom-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 4px;
+            flex-shrink: 0;
+            max-height: 60px;
+        }
+        
+        .bottom-card {
+            flex: 1 1 50%;
+            background: rgba(255,255,255,0.06);
+            border-radius: 10px;
+            padding: 5px 10px;
+            max-height: 55px;
+            overflow: hidden;
+        }
+        
+        .bottom-card-title {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .bottom-card-content {
+            font-size: 0.7rem;
+            color: #ccc;
+        }
+        
+        .nightly-project {
+            font-weight: 500;
+            font-size: 0.75rem;
+            color: #a78bfa;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .nightly-status {
+            font-size: 0.65rem;
+            color: #4ade80;
+            margin-top: 2px;
+        }
+        
+        .yesterday-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 35px;
+            overflow: hidden;
+        }
+        
+        .yesterday-list li {
+            padding: 1px 0;
+            font-size: 0.65rem;
+            color: #94a3b8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        @media (max-width: 768px) {
+            .bottom-row {
+                flex-direction: column;
+                gap: 8px;
+                max-height: none;
+            }
+            
+            .bottom-card {
+                max-height: none;
+                padding: 10px 12px;
+            }
+            
+            .bottom-card-title {
+                font-size: 0.75rem;
+            }
+            
+            .bottom-card-content {
+                font-size: 0.8rem;
+            }
+            
+            .yesterday-list {
+                max-height: none;
+            }
+            
+            .yesterday-list li {
+                font-size: 0.75rem;
+                white-space: normal;
+            }
+            
+            .nightly-project {
+                font-size: 0.85rem;
+            }
+            
+            .trending-section {
+                display: block;
+                margin-top: 10px;
+            }
+            
+            .trending-item {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Fleet Status Header -->
+    <div class="fleet-header" id="fleetStatus">🟢 Fleet Status</div>
+    
+    <div class="main-row">
+        <!-- Phoenix Column -->
+        <div style="display: flex; flex-direction: column; gap: 12px; min-width: 220px;">
+            <!-- Phoenix Card -->
+            <div class="jarvis-section" id="jarvisSection">
+                <div class="face-container">
+                    <div class="face-ring ready" id="faceRing"></div>
+                    <span class="face-icon ready" id="faceIcon">🐦‍🔥</span>
+                </div>
+                <div class="jarvis-info">
+                    <div class="jarvis-name">Phoenix</div>
+                    <div class="jarvis-status" id="jarvisStatus">Listo</div>
+                    <div class="jarvis-version" id="jarvisVersion">OpenClaw</div>
+                </div>
+            </div>
+            
+            <!-- Phoenix Stats -->
+            <div class="stats-section" style="flex: 0;">
+                <div class="stats-group">
+                    <div class="stats-title">🧠 Modelo</div>
+                    <div class="model-name" id="modelName">--</div>
+                    <div class="stat-row">
+                        <span class="stat-label">Contexto</span>
+                        <div class="stat-bar"><div class="stat-fill info" id="contextBar" style="width: 0%"></div></div>
+                        <span class="stat-value" id="contextVal">--%</span>
+                    </div>
+                </div>
+                <div class="stats-group">
+                    <div class="stats-title">💻 Mac</div>
+                    <div class="stat-row">
+                        <span class="stat-label">CPU</span>
+                        <div class="stat-bar"><div class="stat-fill" id="cpuBar" style="width: 0%"></div></div>
+                        <span class="stat-value" id="cpuVal">--%</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">RAM</span>
+                        <div class="stat-bar"><div class="stat-fill" id="ramBar" style="width: 0%"></div></div>
+                        <span class="stat-value" id="ramVal">--%</span>
+                    </div>
+                </div>
+                <!-- Working On -->
+                <div class="working-on">
+                    <div class="working-on-title">🔧 Trabajando en</div>
+                    <div class="working-on-task" id="phoenixTask">--</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Iris Column -->
+        <div style="display: flex; flex-direction: column; gap: 12px; min-width: 220px;">
+            <!-- Iris Card -->
+            <div class="iris-section" id="irisSection">
+                <div class="face-container">
+                    <span class="face-icon ready" style="animation: pulse 2.5s ease-in-out infinite;">🌿</span>
+                </div>
+                <div class="jarvis-info">
+                    <div class="jarvis-name" style="color: #6ee7b7;">Iris</div>
+                    <div class="jarvis-status" id="irisStatus">Cargando...</div>
+                    <div class="jarvis-version" id="irisVersion">--</div>
+                </div>
+            </div>
+            
+            <!-- Iris Stats -->
+            <div class="stats-section" style="flex: 0;">
+                <div class="stats-group">
+                    <div class="stats-title">🌿 Modelo</div>
+                    <div class="model-name" id="irisModelName" style="color: #6ee7b7;">--</div>
+                    <div class="stat-row">
+                        <span class="stat-label">Contexto</span>
+                        <div class="stat-bar"><div class="stat-fill info" id="irisContextBar" style="width: 0%"></div></div>
+                        <span class="stat-value" id="irisContextVal">--%</span>
+                    </div>
+                </div>
+                <div class="stats-group">
+                    <div class="stats-title">🥧 Pi</div>
+                    <div class="stat-row">
+                        <span class="stat-label">CPU</span>
+                        <div class="stat-bar"><div class="stat-fill" id="irisCpuBar" style="width: 0%"></div></div>
+                        <span class="stat-value" id="irisCpuVal">--%</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">RAM</span>
+                        <div class="stat-bar"><div class="stat-fill" id="irisRamBar" style="width: 0%"></div></div>
+                        <span class="stat-value" id="irisRamVal">--%</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Temp</span>
+                        <div class="stat-bar"><div class="stat-fill" id="irisTempBar" style="width: 0%"></div></div>
+                        <span class="stat-value" id="irisTempVal">--°C</span>
+                    </div>
+                </div>
+                <!-- Working On -->
+                <div class="working-on">
+                    <div class="working-on-title">🔧 Trabajando en</div>
+                    <div class="working-on-task" id="irisTask">--</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Time -->
+        <div class="time-section">
+            <div class="time" id="clock">--:--</div>
+            <div class="date" id="dateStr">--</div>
+        </div>
+        
+        <!-- Weather -->
+        <div class="weather-section">
+            <span class="weather-icon" id="weatherIcon">⏳</span>
+            <div class="weather-info">
+                <div class="weather-temp" id="weatherTemp">--°C</div>
+                <div class="weather-desc" id="weatherDesc">Cargando...</div>
+                <div class="weather-tip" id="weatherTip"></div>
+            </div>
+        </div>
+        
+        <!-- Trending -->
+        <div class="trending-section">
+            <div class="trending-title">🔥 Trending</div>
+            <div id="trendingList">
+                <div class="trending-item"><span class="tag">🤖</span> Cargando...</div>
+            </div>
+        </div>
+        
+        <!-- Tasks -->
+        <div class="tasks-section">
+            <div class="task-card">
+                <div class="task-title">📅 Hoy</div>
+                <div class="task-list" id="calendarList">
+                    <div class="task-item no-items">Cargando...</div>
+                </div>
+            </div>
+            <div class="task-card">
+                <!-- Exercise Tracker -->
+                <div class="exercise-tracker" id="exerciseTracker">
+                    <div class="exercise-header">
+                        <span class="exercise-title">🏋️ Ejercicio</span>
+                        <span class="exercise-badge incomplete" id="exerciseBadge">0/4</span>
+                    </div>
+                    <div class="exercise-days" id="exerciseDays">
+                        <div class="exercise-day"><span class="day-label">Lun</span><span class="day-star" id="star-lun">⭐</span></div>
+                        <div class="exercise-day"><span class="day-label">Mar</span><span class="day-star" id="star-mar">⭐</span></div>
+                        <div class="exercise-day"><span class="day-label">Mié</span><span class="day-star" id="star-mie">⭐</span></div>
+                        <div class="exercise-day"><span class="day-label">Jue</span><span class="day-star" id="star-jue">⭐</span></div>
+                        <div class="exercise-day"><span class="day-label">Vie</span><span class="day-star" id="star-vie">⭐</span></div>
+                        <div class="exercise-day"><span class="day-label">Sáb</span><span class="day-star" id="star-sab">⭐</span></div>
+                        <div class="exercise-day"><span class="day-label">Dom</span><span class="day-star" id="star-dom">⭐</span></div>
+                    </div>
+                </div>
+                
+                <div class="task-title">✅ Pendientes</div>
+                <div class="task-list" id="kanbanList">
+                    <div class="task-item no-items">Cargando...</div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- Bottom Row: Nightly Build + Yesterday -->
+    <div class="bottom-row">
+        <div class="bottom-card">
+            <div class="bottom-card-title">🌙 Nightly <span style="color:#666;font-weight:normal;font-size:0.6rem;">Phoenix</span></div>
+            <div class="bottom-card-content">
+                <div class="nightly-project" id="nightlyProject">--</div>
+                <div class="nightly-status" id="nightlyStatus">--</div>
+            </div>
+        </div>
+        <div class="bottom-card">
+            <div class="bottom-card-title">🌿 Ayer <span style="color:#666;font-weight:normal;font-size:0.6rem;">Iris</span></div>
+            <div class="bottom-card-content">
+                <ul class="yesterday-list" id="yesterdayList">
+                    <li>Cargando...</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification (outside main-row) -->
+    <div class="notif-section hidden" id="notifSection">
+        <span class="notif-icon">🔔</span>
+        <span class="notif-text" id="notifText"></span>
+    </div>
+    
+    <!-- Thought bar -->
+    <div class="thought-bar">
+        <span class="thought-icon">💭</span>
+        <span id="thoughtText">Cargando...</span>
+    </div>
+    
+    <script>
+        // Clock
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('dateStr').textContent = now.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+        
+        const stateClasses = {
+            'ready': 'ready', 'listo': 'ready',
+            'thinking': 'thinking', 'pensando': 'thinking',
+            'working': 'working', 'trabajando': 'working',
+            'alert': 'alert', 'alerta': 'alert',
+            'sleeping': 'sleeping', 'durmiendo': 'sleeping'
+        };
+        
+        async function loadData() {
+            try {
+                const res = await fetch('/data/dashboard.json?' + Date.now());
+                const data = await res.json();
+                
+                // Fleet Status
+                if (data.fleet) {
+                    document.getElementById('fleetStatus').textContent = data.fleet.status || 'Fleet Status';
+                }
+                
+                // Jarvis/Phoenix
+                if (data.jarvis) {
+                    const statusText = data.jarvis.status || 'Listo';
+                    const state = data.jarvis.state || (data.jarvis.thinking ? 'thinking' : 'ready');
+                    const stateClass = stateClasses[state.toLowerCase()] || 'ready';
+                    
+                    document.getElementById('jarvisStatus').textContent = statusText;
+                    document.getElementById('jarvisStatus').className = 'jarvis-status ' + stateClass;
+                    document.getElementById('faceIcon').className = 'face-icon ' + stateClass;
+                    document.getElementById('faceRing').className = 'face-ring ' + stateClass;
+                    document.getElementById('jarvisSection').className = 'jarvis-section' + 
+                        (stateClass === 'alert' ? ' alert' : stateClass === 'working' ? ' working' : '');
+                    
+                    if (data.jarvis.version) {
+                        document.getElementById('jarvisVersion').textContent = data.jarvis.version;
+                    }
+                }
+                
+                // Phoenix Model & System
+                if (data.model) {
+                    document.getElementById('modelName').textContent = data.model.name || '--';
+                    const ctx = data.model.contextPercent || 0;
+                    document.getElementById('contextBar').style.width = ctx + '%';
+                    document.getElementById('contextVal').textContent = ctx + '%';
+                    document.getElementById('contextBar').className = 'stat-fill' + (ctx > 80 ? ' danger' : ctx > 60 ? ' warning' : ' info');
+                }
+                
+                if (data.system) {
+                    const cpu = data.system.cpu || 0;
+                    const ram = data.system.ram || 0;
+                    document.getElementById('cpuBar').style.width = cpu + '%';
+                    document.getElementById('ramBar').style.width = ram + '%';
+                    document.getElementById('cpuVal').textContent = cpu + '%';
+                    document.getElementById('ramVal').textContent = ram + '%';
+                    document.getElementById('cpuBar').className = 'stat-fill' + (cpu > 80 ? ' danger' : cpu > 50 ? ' warning' : '');
+                    document.getElementById('ramBar').className = 'stat-fill' + (ram > 80 ? ' danger' : ram > 50 ? ' warning' : '');
+                }
+                
+                // Iris
+                if (data.iris) {
+                    const irisOnline = data.iris.status === 'online';
+                    document.getElementById('irisStatus').textContent = irisOnline ? 'Online 🌿' : 'Offline';
+                    document.getElementById('irisVersion').textContent = data.iris.version || '--';
+                    document.getElementById('irisSection').className = 'iris-section' + (irisOnline ? '' : ' offline');
+                    
+                    // Iris Model
+                    document.getElementById('irisModelName').textContent = data.iris.model?.split('/').pop() || '--';
+                    
+                    // Iris context (if available)
+                    if (data.iris.openclaw) {
+                        const irisCtx = data.iris.openclaw.contextPercent || 0;
+                        document.getElementById('irisContextBar').style.width = irisCtx + '%';
+                        document.getElementById('irisContextVal').textContent = irisCtx + '%';
+                        document.getElementById('irisContextBar').className = 'stat-fill' + (irisCtx > 80 ? ' danger' : irisCtx > 60 ? ' warning' : ' info');
+                    }
+                    
+                    // Iris System (only show if online)
+                    if (irisOnline && data.iris.system) {
+                        const irisCpu = data.iris.system.cpu || 0;
+                        const irisRam = data.iris.system.ram || 0;
+                        const irisTemp = data.iris.system.temp || 0;
+                        
+                        document.getElementById('irisCpuBar').style.width = irisCpu + '%';
+                        document.getElementById('irisCpuVal').textContent = irisCpu + '%';
+                        document.getElementById('irisCpuBar').className = 'stat-fill' + (irisCpu > 80 ? ' danger' : irisCpu > 50 ? ' warning' : '');
+                        
+                        document.getElementById('irisRamBar').style.width = irisRam + '%';
+                        document.getElementById('irisRamVal').textContent = irisRam + '%';
+                        document.getElementById('irisRamBar').className = 'stat-fill' + (irisRam > 80 ? ' danger' : irisRam > 50 ? ' warning' : '');
+                        
+                        // Temperature bar (scale to 100°C max)
+                        const tempPercent = Math.min((irisTemp / 100) * 100, 100);
+                        document.getElementById('irisTempBar').style.width = tempPercent + '%';
+                        document.getElementById('irisTempVal').textContent = irisTemp + '°C';
+                        document.getElementById('irisTempBar').className = 'stat-fill' + (irisTemp > 75 ? ' danger' : irisTemp > 60 ? ' warning' : ' info');
+                    }
+                }
+                
+                // Thought
+                if (data.thought) {
+                    document.getElementById('thoughtText').textContent = data.thought;
+                }
+                
+                // Weather
+                if (data.weather) {
+                    document.getElementById('weatherIcon').textContent = data.weather.icon || '🌤️';
+                    document.getElementById('weatherTemp').textContent = data.weather.temp || '--°C';
+                    document.getElementById('weatherDesc').textContent = data.weather.desc || '';
+                    document.getElementById('weatherTip').textContent = data.weather.tip || '';
+                }
+                
+                // Model & System - Moved to individual agent cards
+                // Phoenix model/system updated in Phoenix card above
+                // Iris model/system updated in Iris card above
+                
+                // Calendar
+                if (data.calendar?.length > 0) {
+                    document.getElementById('calendarList').innerHTML = data.calendar.map(e => 
+                        `<div class="task-item"><span class="task-time">${e.time || ''}</span><span class="task-text">${e.title}</span></div>`
+                    ).join('');
+                } else {
+                    document.getElementById('calendarList').innerHTML = '<div class="task-item no-items">Sin eventos</div>';
+                }
+                
+                // Kanban
+                if (data.kanban?.length > 0) {
+                    document.getElementById('kanbanList').innerHTML = data.kanban.map(t => 
+                        `<div class="task-item"><span class="task-text">• ${t}</span></div>`
+                    ).join('');
+                } else {
+                    document.getElementById('kanbanList').innerHTML = '<div class="task-item no-items">Sin pendientes</div>';
+                }
+                
+                // Exercise tracker
+                if (data.exercise) {
+                    const days = data.exercise.days || {};
+                    const dayKeys = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'];
+                    let count = 0;
+                    
+                    dayKeys.forEach(day => {
+                        const star = document.getElementById('star-' + day);
+                        if (star) {
+                            if (days[day]) {
+                                star.classList.add('done');
+                                count++;
+                            } else {
+                                star.classList.remove('done');
+                            }
+                        }
+                    });
+                    
+                    const goal = data.exercise.goal || 4;
+                    const badge = document.getElementById('exerciseBadge');
+                    badge.textContent = count + '/' + goal;
+                    
+                    if (count >= goal) {
+                        badge.className = 'exercise-badge achieved';
+                        badge.textContent = '🎉 ' + count + '/' + goal;
+                    } else {
+                        badge.className = 'exercise-badge incomplete';
+                    }
+                }
+                
+                // Notification
+                const notifSection = document.getElementById('notifSection');
+                if (data.notification) {
+                    document.getElementById('notifText').textContent = data.notification;
+                    notifSection.classList.remove('hidden');
+                } else {
+                    notifSection.classList.add('hidden');
+                }
+                
+                // Trending
+                if (data.trending?.length > 0) {
+                    document.getElementById('trendingList').innerHTML = data.trending.map(t => 
+                        `<div class="trending-item"><span class="tag ${t.category === 'salud' ? 'health' : ''}">${t.category === 'salud' ? '🏥' : '🤖'}</span> ${t.title} <span class="time">${t.time || ''}</span></div>`
+                    ).join('');
+                } else {
+                    document.getElementById('trendingList').innerHTML = '<div class="trending-item" style="color:#666;">Sin noticias</div>';
+                }
+                
+                // Working On
+                if (data.phoenix?.currentTask) {
+                    document.getElementById('phoenixTask').textContent = data.phoenix.currentTask;
+                } else if (data.jarvis?.currentTask) {
+                    document.getElementById('phoenixTask').textContent = data.jarvis.currentTask;
+                }
+                
+                if (data.iris?.currentTask) {
+                    document.getElementById('irisTask').textContent = data.iris.currentTask;
+                }
+                
+                // Nightly Build
+                if (data.nightly) {
+                    document.getElementById('nightlyProject').textContent = data.nightly.project || '--';
+                    document.getElementById('nightlyStatus').textContent = data.nightly.status || '--';
+                }
+                
+                // Yesterday (Iris)
+                if (data.yesterday?.length > 0) {
+                    document.getElementById('yesterdayList').innerHTML = data.yesterday.map(item => 
+                        `<li>• ${item}</li>`
+                    ).join('');
+                } else if (data.iris?.yesterday?.length > 0) {
+                    document.getElementById('yesterdayList').innerHTML = data.iris.yesterday.map(item => 
+                        `<li>• ${item}</li>`
+                    ).join('');
+                }
+            } catch (e) {
+                console.error('Dashboard load error:', e);
+                document.getElementById('thoughtText').textContent = '⚠️ Error cargando datos: ' + e.message;
+            }
+        }
+        
+        setInterval(loadData, 5000);
+        loadData();
+    </script>
+</body>
+</html>

@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Phoenix Mobile</title>
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐦‍🔥</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e2e8f0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            padding: 15px;
+            padding-top: env(safe-area-inset-top, 15px);
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .jarvis-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .jarvis-icon {
+            font-size: 2.5rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .jarvis-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .jarvis-status {
+            font-size: 0.85rem;
+            color: #4ade80;
+        }
+        
+        .time-display {
+            text-align: right;
+        }
+        
+        .time {
+            font-size: 1.8rem;
+            font-weight: 300;
+        }
+        
+        .date {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+        
+        .card {
+            background: rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 12px;
+        }
+        
+        .card-title {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+        
+        /* Weather */
+        .weather-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .weather-icon {
+            font-size: 2.5rem;
+        }
+        
+        .weather-temp {
+            font-size: 2rem;
+            font-weight: 300;
+        }
+        
+        .weather-details {
+            flex: 1;
+        }
+        
+        .weather-desc {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+        
+        .weather-tip {
+            font-size: 0.85rem;
+            color: #fbbf24;
+            margin-top: 4px;
+        }
+        
+        /* Stats grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+        }
+        
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #3b82f6;
+        }
+        
+        .stat-label {
+            font-size: 0.7rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        
+        /* Calendar */
+        .event-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .event-item:last-child {
+            border-bottom: none;
+        }
+        
+        .event-time {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #3b82f6;
+            min-width: 55px;
+        }
+        
+        .event-title {
+            font-size: 0.95rem;
+            flex: 1;
+        }
+        
+        /* Tasks */
+        .task-item {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.9rem;
+        }
+        
+        .task-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* Notification */
+        .notification {
+            background: rgba(74, 222, 128, 0.15);
+            border-left: 4px solid #4ade80;
+            padding: 12px 15px;
+            border-radius: 0 12px 12px 0;
+            margin-bottom: 12px;
+            display: none;
+        }
+        
+        .notification.show {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .notification-icon {
+            font-size: 1.2rem;
+        }
+        
+        .notification-text {
+            font-size: 0.9rem;
+        }
+        
+        /* Thought */
+        .thought {
+            text-align: center;
+            font-style: italic;
+            color: #64748b;
+            padding: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .thought-icon {
+            margin-right: 8px;
+        }
+        
+        /* Progress bar */
+        .progress-bar {
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #10b981);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        
+        /* Refresh indicator */
+        .refresh-time {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #475569;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="jarvis-info">
+            <span class="jarvis-icon">🐦‍🔥</span>
+            <div>
+                <div class="jarvis-name">Phoenix</div>
+                <div class="jarvis-status" id="jarvisStatus">Conectando...</div>
+            </div>
+        </div>
+        <div class="time-display">
+            <div class="time" id="clock">--:--</div>
+            <div class="date" id="dateStr">--</div>
+        </div>
+    </div>
+    
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <span class="notification-icon">🔔</span>
+        <span class="notification-text" id="notificationText"></span>
+    </div>
+    
+    <!-- Weather -->
+    <div class="card weather-card">
+        <span class="weather-icon" id="weatherIcon">⏳</span>
+        <div class="weather-details">
+            <div class="weather-desc" id="weatherDesc">Cargando...</div>
+            <div class="weather-tip" id="weatherTip"></div>
+        </div>
+        <div class="weather-temp" id="weatherTemp">--°</div>
+    </div>
+    
+    <!-- Model Stats -->
+    <div class="card">
+        <div class="card-title">🧠 Modelo</div>
+        <div class="model-name" id="modelName" style="font-size: 1.1rem; color: #60a5fa; font-weight: 600; margin-bottom: 10px;">--</div>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="contextVal">--%</div>
+                <div class="stat-label">Contexto</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="usageDayVal">--</div>
+                <div class="stat-label">Día</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="usageWeekVal">--</div>
+                <div class="stat-label">Semana</div>
+            </div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="contextBar" style="width: 0%"></div>
+        </div>
+    </div>
+    
+    <!-- System Stats -->
+    <div class="card">
+        <div class="card-title">💻 Sistema (Mac mini)</div>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="cpuVal">--%</div>
+                <div class="stat-label">CPU</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="ramVal">--%</div>
+                <div class="stat-label">RAM</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="diskVal">--%</div>
+                <div class="stat-label">Disco</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Calendar -->
+    <div class="card">
+        <div class="card-title">📅 Hoy</div>
+        <div id="calendarList">
+            <div class="event-item">
+                <span class="event-time">--:--</span>
+                <span class="event-title">Cargando...</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tasks -->
+    <div class="card">
+        <div class="card-title">✅ Pendientes</div>
+        <div id="taskList">
+            <div class="task-item">Cargando...</div>
+        </div>
+    </div>
+    
+    <!-- Thought -->
+    <div class="thought">
+        <span class="thought-icon">💭</span>
+        <span id="thoughtText">...</span>
+    </div>
+    
+    <div class="refresh-time" id="refreshTime">Última actualización: --</div>
+    
+    <script>
+        // Clock
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('dateStr').textContent = now.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+        
+        // Load data
+        async function loadData() {
+            try {
+                const res = await fetch('/data/dashboard.json?' + Date.now());
+                const data = await res.json();
+                
+                // Jarvis status
+                if (data.jarvis) {
+                    document.getElementById('jarvisStatus').textContent = data.jarvis.status || 'Listo';
+                }
+                
+                // Notification
+                const notif = document.getElementById('notification');
+                if (data.notification) {
+                    document.getElementById('notificationText').textContent = data.notification;
+                    notif.classList.add('show');
+                } else {
+                    notif.classList.remove('show');
+                }
+                
+                // Weather
+                if (data.weather) {
+                    document.getElementById('weatherIcon').textContent = data.weather.icon || '🌤️';
+                    document.getElementById('weatherTemp').textContent = data.weather.temp || '--°';
+                    document.getElementById('weatherDesc').textContent = data.weather.desc || '';
+                    document.getElementById('weatherTip').textContent = data.weather.tip || '';
+                }
+                
+                // Model
+                if (data.model) {
+                    document.getElementById('modelName').textContent = data.model.name || '--';
+                    const ctx = data.model.contextPercent || 0;
+                    document.getElementById('contextVal').textContent = ctx + '%';
+                    document.getElementById('contextBar').style.width = ctx + '%';
+                    document.getElementById('usageDayVal').textContent = data.model.usageDay || '--';
+                    document.getElementById('usageWeekVal').textContent = data.model.usageWeek || '--';
+                }
+                
+                // System
+                if (data.system) {
+                    document.getElementById('cpuVal').textContent = (data.system.cpu || 0) + '%';
+                    document.getElementById('ramVal').textContent = (data.system.ram || 0) + '%';
+                    document.getElementById('diskVal').textContent = (data.system.disk || 0) + '%';
+                }
+                
+                // Calendar
+                if (data.calendar?.length > 0) {
+                    document.getElementById('calendarList').innerHTML = data.calendar.map(e => 
+                        `<div class="event-item"><span class="event-time">${e.time}</span><span class="event-title">${e.title}</span></div>`
+                    ).join('');
+                } else {
+                    document.getElementById('calendarList').innerHTML = '<div class="event-item"><span class="event-time">✓</span><span class="event-title">Sin eventos hoy</span></div>';
+                }
+                
+                // Tasks
+                if (data.kanban?.length > 0) {
+                    document.getElementById('taskList').innerHTML = data.kanban.map(t => 
+                        `<div class="task-item">${t}</div>`
+                    ).join('');
+                } else {
+                    document.getElementById('taskList').innerHTML = '<div class="task-item">Sin pendientes</div>';
+                }
+                
+                // Thought
+                if (data.thought) {
+                    document.getElementById('thoughtText').textContent = data.thought;
+                }
+                
+                // Update refresh time
+                document.getElementById('refreshTime').textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+                
+            } catch (err) {
+                console.error('Error loading data:', err);
+                document.getElementById('jarvisStatus').textContent = 'Sin conexión';
+                document.getElementById('jarvisStatus').style.color = '#ef4444';
+            }
+        }
+        
+        // Initial load and refresh every 30 seconds
+        loadData();
+        setInterval(loadData, 30000);
+        
+        // Pull to refresh (simple implementation)
+        let touchStart = 0;
+        document.addEventListener('touchstart', e => {
+            touchStart = e.touches[0].clientY;
+        });
+        document.addEventListener('touchend', e => {
+            const touchEnd = e.changedTouches[0].clientY;
+            if (touchEnd - touchStart > 100 && window.scrollY === 0) {
+                loadData();
+            }
+        });
+    </script>
+</body>
+</html>
