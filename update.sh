@@ -97,7 +97,7 @@ PHOENIX_TASK=$(jq -r '.phoenix.currentTask // .jarvis.currentTask // "--"' "$DAT
 THOUGHT=$(jq -r '.thought // "🐦‍🔥"' "$DATA_FILE" 2>/dev/null || echo "🐦‍🔥")
 
 # Fetch Iris metrics via SSH
-IRIS_METRICS=$(ssh -o ConnectTimeout=2 -o StrictHostKeyChecking=no jmfraga@100.71.128.102 "cat /home/jmfraga/.openclaw/workspace/shared_with_phoenix/outbox/iris-status.json 2>/dev/null" 2>/dev/null || echo '{"status":"offline"}')
+IRIS_METRICS=$(ssh -o ConnectTimeout=2 -o StrictHostKeyChecking=no jmfraga@<tailscale-ip> "cat /home/jmfraga/.openclaw/workspace/shared_with_phoenix/outbox/iris-status.json 2>/dev/null" 2>/dev/null || echo '{"status":"offline"}')
 
 # Extract Iris data
 IRIS_STATUS=$(echo "$IRIS_METRICS" | jq -r '.status // "offline"' 2>/dev/null || echo "offline")
